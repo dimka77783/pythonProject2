@@ -11,17 +11,17 @@ from auth_data import id_password
 
 path = "123.xlsx"  # имя файла
 
-#  n = input(str("Введите номер протокола: "))
-#  date_prot = input('введите дату проведения протокола (гггг-мм-дд): ')
-#  path_protokol = input('введите путь к протоколу: ')
-'''
+n = input(str("Введите номер протокола: "))
+date_prot = input('введите дату проведения протокола (гггг-мм-дд): ')
+path_protokol = input('введите путь к протоколу: ')
+
 date_now = datetime.date.today()
 date_prot = date_prot.split('-')
 day_count = datetime.date(int(date_prot[0]), int(date_prot[1]), int(date_prot[2]))
 day_count = date_now - day_count
 day_count = str(day_count)
 day_count = (day_count.split()[0])
-'''
+
 
 wb_obj = openpyxl.load_workbook(path)  # Открываем файл
 sheet_obj = wb_obj.active  # Выбираем активный лист таблицы(
@@ -40,7 +40,6 @@ driver = webdriver.Chrome(
     options=options
 )
 
-
 def iogin():
     email_input = WebDriverWait(driver, 10).until(EC.element_to_be_clickable((By.ID, "login")))
     email_input.clear()
@@ -48,35 +47,46 @@ def iogin():
     password_input = WebDriverWait(driver, 10).until(EC.element_to_be_clickable((By.ID, "password")))
     password_input.clear()
     password_input.send_keys(id_password)
-    #  time.sleep(3)
     password_input.send_keys(Keys.ENTER)
-    #  time.sleep(6)
-
 
 def find_elment_class(n):
     WebDriverWait(driver, 10).until(EC.element_to_be_clickable((By.CLASS_NAME, n))).click()
 
-    '''
-    WebDriverWait(driver, 10).until(EC.element_to_be_clickable((By.ID, "myDynamicElement")))
-    element.click()
-    '''
-
-
-
 def find_element_link(n):
     WebDriverWait(driver, 10).until(EC.element_to_be_clickable((By.LINK_TEXT, n))).click()
-
 
 def find_element_xpaths(n):
     ds = driver.find_elements(By.XPATH, n)
     return ds
 
-
-
-
 def find_element_xpath(n):
-    driver.find_elements(By.XPATH, n).click()
+    WebDriverWait(driver, 10).until(EC.element_to_be_clickable((By.XPATH, n))).click()
 
+def find_element_xpath_prot(n, path_protokol):
+    driver.find_element(By.XPATH, n).send_keys(path_protokol)
+
+def find_id(n):
+    WebDriverWait(driver, 10).until(EC.element_to_be_clickable((By.ID, n))).click()
+
+def find_iframe(n):
+    driver.switch_to.frame(driver.find_element(By.TAG_NAME, n))
+    time.sleep(4)
+
+def send_prot(s,n):
+    input_n_prot = driver.find_element(By.XPATH, s)
+    input_n_prot.clear()
+    input_n_prot.send_keys(n)
+    time.sleep(2)
+
+def send_date(n, day_count):
+    driver.find_element(By.XPATH, n).clear()
+    driver.find_element(By.XPATH, n).send_keys(Keys.LEFT * int(day_count))
+    time.sleep(2)
+
+def send_date2(n, day_count):
+    driver.find_element(By.XPATH, n).clear()
+    driver.find_element(By.XPATH, n).send_keys(Keys.LEFT * int(day_count))
+    time.sleep(2)
 
 def link_lists():
 
@@ -99,14 +109,10 @@ try:
     iogin()
     print('вход')
     find_elment_class('work')
-    #  time.sleep(5)
     find_element_link("Все идеи")
     print('все')
-    #  time.sleep(5)
     find_element_link("2ТС без ТЭ")
-    #  time.sleep(5)
     print('2ТС ТЭ')
-    #  time.sleep(5)
     print(type(link_lists()))
     rec = 1
     while rec == 1:
@@ -117,13 +123,28 @@ try:
             name_ideas = cell_ob.value
             for y in link_list:
                 ds = driver.find_elements(By.XPATH, " // *[ @ href = 'Offer.aspx?id=" + str(number_ideas) + "']")
-                print(ds)
-                time.sleep(7)
-
+                time.sleep(5)
 
                 if len(str(ds)) >= 1:
-                    driver.find_element(By.XPATH, " // *[ @ href = 'Offer.aspx?id=" + str(number_ideas) + "']").click()
-                    time.sleep(8)
+                    find_element_xpath(" // *[ @ href = 'Offer.aspx?id=" + str(number_ideas) + "']")
+                    find_id("ctl00_ctl00_ctl00_MainContent_VMenuRightContent_OfferMenu_linkEngine83")
+                    find_id("ctl00_ctl00_ctl00_MainContent_CommandsMenu_linkEdit")
+                    driver.switch_to.frame(driver.find_element(By.TAG_NAME, "iframe"))
+                    time.sleep(5)
+                    send_prot("// input[@class='alpaca-control form-control' and @id = 'alpaca2']", n)
+                    print(int(day_count))
+                    send_date("// input[@class='alpaca-control form-control' and @id = 'alpaca3']", day_count)
+                    send_date2("// input[@class='alpaca-control form-control' and @id = 'alpaca4']", day_count)
+                    driver.switch_to.default_content()
+                    time.sleep(3)
+                    find_id("ctl00_ctl00_ctl00_MainContent_CommandsMenu_linkSave")
+                    find_id("ctl00_ctl00_ctl00_MainContent_VMenuRightContent_"
+                                            "OfferMenu_linkDocuments")
+                    time.sleep(3)
+                    find_element_xpath_prot("//input[@type='file'][contains(@id,'FileUpload1')]", path_protokol)
+                    find_id("ctl00_ctl00_ctl00_MainContent_VMenuLeftConte_OfferContent_AttachedFilesCore_BtnSave")
+
+
 except Exception as ex:
     print(ex)
 finally:
